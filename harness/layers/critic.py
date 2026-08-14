@@ -73,6 +73,37 @@ from __future__ import annotations
 from harness.middleware import Middleware
 
 
+def _find_source(ctx, text: str):
+    if ctx.corpus is None:
+        return None
+    for doc in ctx.corpus.docs:
+        if doc.body in ctx.observed_text and any(
+            text in line.strip() for line in doc.body.splitlines()
+        ):
+            return doc.doc_id
+    return None
+
+
+def _split_fused(ctx, text: str):
+    for sep in (" và ", " and "):
+        start = 0
+        while True:
+            index = text.find(sep, start)
+            if index == -1:
+                break
+            left = text[:index].strip()
+            right = text[index + len(sep):].strip()
+            left_doc = _find_source(ctx, left)
+            right_doc = _find_source(ctx, right)
+            if left_doc and right_doc and left_doc != right_doc:
+                return [
+                    {"text": left, "doc_id": left_doc},
+                    {"text": right, "doc_id": right_doc},
+                ]
+            start = index + len(sep)
+    return []
+
+
 class Critic(Middleware):
     """Xoá những gì bằng chứng không đỡ; abstain khi không còn gì."""
 
@@ -91,4 +122,64 @@ class Critic(Middleware):
         #     claims = [], citations = [], và viết lại "answer" nói rõ là
         #     không đủ căn cứ.
         #  6. Cập nhật report["citations"] cho khớp với claims còn lại.
-        return report  # <- mặc định KHÔNG LÀM GÌ: agent vẫn chạy được
+        claims = report.get("claims")
+        if not isinstance(claims, list):
+            return report
+
+        observed = ctx.observed_text
+        docs = ctx.corpus.docs if ctx.corpus is not None else []
+        kept = []
+        split_conflict = False
+
+        for claim in claims:
+            if not isinstance(claim, dict):
+                continue
+            text = claim.get("text")
+            if not isinstance(text, str) or not text:
+                continue
+            if text in observed:
+                kept.append(claim)
+                continue
+
+            cursor = 0
+            pair = None
+            while True:
+                cut = text.find(" và ", cursor)
+                if cut < 0:
+                    break
+                left = text[:cut].strip()
+                right = text[cut + len(" và "):].strip()
+                if left and right:
+                    left_docs = [d for d in docs if d.body in observed and left in d.body]
+                    right_docs = [d for d in docs if d.body in observed and right in d.body]
+                    pair = next(
+                        ((a, b) for a in left_docs for b in right_docs
+                        if a.doc_id != b.doc_id),
+                        None,
+                    )
+                if pair is not None:
+                    kept.extend([
+                        {"text": left, "doc_id": pair[0].doc_id},
+                        {"text": right, "doc_id": pair[1].doc_id},
+                    ])
+                    split_conflict = True
+                    break
+                cursor = cut + 1
+
+        report["claims"] = kept
+        report["citations"] = sorted({
+            c.get("doc_id")
+            for c in kept
+            if isinstance(c.get("doc_id"), str) and c.get("doc_id")
+        })
+
+        if split_conflict:
+            report["abstain"] = True
+        if not kept:
+            report["abstain"] = True
+            report["citations"] = []
+            report["answer"] = (
+                "Không đủ căn cứ trong các tài liệu đã quan sát để đưa ra "
+                "kết luận đáng tin cậy."
+            )
+        return report

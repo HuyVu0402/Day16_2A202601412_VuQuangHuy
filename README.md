@@ -31,9 +31,9 @@ Bạn được chấm trên ba thứ: nghiên cứu **có căn cứ** (grounding
 Phút 0–15, chạy đúng ba lệnh này:
 
 ```bash
-cd Day16-AgentArena-Student
-python3 -m pytest -q                                  # môi trường ổn chưa
-python3 scripts/run_practice.py --layers none         # agent yếu, chưa có layer nào
+cd Day16_2A202601412_VuQuangHuy
+python -m pytest -q                                  # môi trường ổn chưa
+python scripts/run_practice.py --layers none         # agent yếu, chưa có layer nào
 ```
 
 Lệnh thứ ba chạy xong dưới hai giây (mock model, offline, không cần API key) và in ra
@@ -46,7 +46,7 @@ Không cần mạng, không cần API key.
 
 ```bash
 # kiểm tra môi trường sâu hơn, nếu repo của bạn có script này
-python3 scripts/verify.py
+python scripts/verify.py
 ```
 
 ---
@@ -185,23 +185,23 @@ Chi tiết đầy đủ và sơ đồ củ hành nằm ở đầu `harness/middl
 
 ```bash
 # cả 9 brief công khai, đủ năm layer của bạn
-python3 scripts/run_practice.py
+python scripts/run_practice.py
 
 # baseline: không layer nào — dùng để đo bạn đã tiến được bao nhiêu
-python3 scripts/run_practice.py --layers none
+python scripts/run_practice.py --layers none
 
 # bật đúng một vài layer, để biết layer nào thật sự có tác dụng
-python3 scripts/run_practice.py --layers critic
-python3 scripts/run_practice.py --layers critic,citation_checker
+python scripts/run_practice.py --layers critic
+python scripts/run_practice.py --layers critic,citation_checker
 
 # soi một brief duy nhất khi đang gỡ lỗi
-python3 scripts/run_practice.py --brief pub-01-sla-hien-hanh
+python scripts/run_practice.py --brief pub-01-sla-hien-hanh
 
 # tắt lỗi ngẫu nhiên của tool — CHỈ để gỡ lỗi, không phải để lấy điểm đẹp
-python3 scripts/run_practice.py --no-flaky
+python scripts/run_practice.py --no-flaky
 
 # đặt tên bài nộp và ghi ra file điểm riêng
-python3 scripts/run_practice.py --entry ten-doi-cua-ban --out runs/ten-doi.json
+python scripts/run_practice.py --entry ten-doi-cua-ban --out runs/ten-doi.json
 ```
 
 Kết quả in ra một dòng cho mỗi brief:
@@ -242,13 +242,13 @@ khác hẳn nhau, và trong 80 phút build thì đoán sai một lần là mất
 Bộ chấm ĐÃ tính sẵn cả bốn. `run_practice.py` bây giờ ghi nó vào `runs/*.json`, và:
 
 ```bash
-python3 scripts/run_practice.py        # chạy trước
-python3 scripts/selfeval.py            # rồi đọc chỗ này
+python scripts/run_practice.py        # chạy trước
+python scripts/selfeval.py            # rồi đọc chỗ này
 
-python3 scripts/selfeval.py --brief pub-04-lam-viec-tu-xa   # soi một brief
-python3 scripts/selfeval.py --summary                       # chỉ phần xếp hạng cuối
-python3 scripts/selfeval.py --claims 3                      # in ít claim lại
-python3 scripts/selfeval.py --run runs/ten-doi.json         # đọc file điểm khác
+python scripts/selfeval.py --brief pub-04-lam-viec-tu-xa   # soi một brief
+python scripts/selfeval.py --summary                       # chỉ phần xếp hạng cuối
+python scripts/selfeval.py --claims 3                      # in ít claim lại
+python scripts/selfeval.py --run runs/ten-doi.json         # đọc file điểm khác
 ```
 
 Mỗi brief in ra sáu khối, đọc từ trên xuống:
