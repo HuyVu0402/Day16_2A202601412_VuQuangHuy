@@ -61,7 +61,7 @@ Xem `harness/middleware.py` để biết thứ tự các hook.
 
 from __future__ import annotations
 
-from arena.model import is_degraded
+from arena.model import is_degraded  # noqa: F401  (dùng trong phần TODO)
 
 from harness.middleware import Middleware
 
@@ -86,7 +86,6 @@ class Retry(Middleware):
         self.reserve = max(0, int(reserve))
 
     def wrap_tool_call(self, ctx, call, name, args):
-        result = call(name, args)
         # TODO (§7): khoảng 8-12 dòng.
         #  1. Trong khi số lần đã thử < self.max_attempts VÀ kết quả còn
         #     hỏng — tức `(not result.ok) or is_degraded(result.content)` —
@@ -98,6 +97,7 @@ class Retry(Middleware):
         #  3. Trả về kết quả cuối cùng (kể cả khi vẫn hỏng: agent phải
         #     nhìn thấy sự thật, đừng bịa nội dung thay nó).
         #  4. Ghi số lần đã thử vào ctx.state để gỡ lỗi.
+        # return result  # <- mặc định KHÔNG LÀM GÌ: agent vẫn chạy được
         result = call(name, args)
         attempts = 1
 

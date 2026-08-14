@@ -63,7 +63,10 @@ from harness.middleware import Middleware
 
 
 def _line_supports(body: str, text: str) -> bool:
-    return bool(text) and any(text in line.strip() for line in body.splitlines())
+    if not text:
+        return False
+    needle = text.casefold()
+    return any(needle in line.strip().casefold() for line in body.splitlines())
 
 
 class CitationChecker(Middleware):
@@ -84,6 +87,7 @@ class CitationChecker(Middleware):
         #     Đổi doc_id sang nó, GIỮ NGUYÊN text.
         #  4. Không tìm được nguồn nào -> để `critic` xử lý, đừng bịa doc_id.
         #  5. Cập nhật report["citations"] = danh sách doc_id đã sắp xếp.
+        # return report  # <- mặc định KHÔNG LÀM GÌ: agent vẫn chạy được
         claims = report.get("claims")
         if not isinstance(claims, list) or not claims or ctx.corpus is None:
             return report
@@ -101,14 +105,14 @@ class CitationChecker(Middleware):
                 continue
 
             cited = ctx.corpus.get(doc_id) if isinstance(doc_id, str) else None
-            if cited is not None and text in cited.body:
+            if cited is not None and _line_supports(cited.body, text):
                 fixed.append(claim)
                 continue
 
             source = next(
                 (
                     doc for doc in ctx.corpus.docs
-                    if doc.body in ctx.observed_text and text in doc.body
+                    if doc.body in ctx.observed_text and _line_supports(doc.body, text)
                 ),
                 None,
             )
